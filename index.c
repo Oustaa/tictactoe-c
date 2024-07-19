@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define WINNING_SCHEMAS                                                                          \
     {                                                                                            \
@@ -13,6 +14,13 @@ typedef struct
     char played_spots[6];
     int played_count;
 } Player;
+
+void clear_input_buffer()
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+}
 
 void draw_map(char played_spots[9])
 {
@@ -40,7 +48,6 @@ bool check_player_win(Player *player)
         {
             for (int k = 0; k < player->played_count; k++)
             {
-                // printf("player spot %d, tested spot %c\n", player->played_spots[k], winning_schemas[i][j]);
                 if ((int)player->played_spots[k] == winning_schemas[i][j])
                 {
                     match_count++;
@@ -89,32 +96,154 @@ void play(Player *players[], int current_player_index, char played_spots[])
     draw_map(played_spots);
 }
 
-int main()
+int main_menu()
+{
+    int answer;
+
+    printf("Welcome to tic tac toe:\n");
+
+    do
+    {
+        printf("1 > To play against friend\n");
+        printf("2 > To play against computer\n");
+        printf("3 > To quit the game\n");
+        printf("Enter your choise here: ");
+
+        scanf("%d", &answer);
+
+    } while (answer != 1 && answer != 2 && answer != 3);
+
+    return answer;
+}
+
+void get_player_name(char **player_name)
+{
+    char local_player_name[255];
+
+    printf("Enter player name: ");
+    fgets(local_player_name, 255, stdin);
+
+    size_t len = strlen(local_player_name);
+    if (len > 0 && local_player_name[len - 1] == '\n')
+    {
+        local_player_name[len - 1] = '\0';
+    }
+
+    if (strlen(local_player_name) != 0)
+    {
+        *player_name = local_player_name;
+    }
+
+    clear_input_buffer();
+}
+
+int in_game_menu()
+{
+    int answer;
+
+    printf("\nChoose an option:\n");
+
+    do
+    {
+        printf("1 > Continue playing\n");
+        printf("2 > Back to the menu\n");
+        printf("Enter your choise here: ");
+
+        scanf("%d", &answer);
+
+    } while (answer != 1 && answer != 2);
+
+    return answer;
+}
+
+void game(char *player_one_name, char *player_two_name)
 {
     bool game_over = false;
     char played_spots[] = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
-    Player players[2] = {{"Oussama", 0, {}, 0}, {"Kaoutar", 0, {}, 0}};
+    Player players[2] = {{"Player one", 0, {}, 0}, {"Player two", 0, {}, 0}};
     Player *players_ptr[] = {&players[0], &players[1]};
     int current_player_index = 0;
     int play_count = 0;
+    int ties = 0;
 
-    draw_map(played_spots);
-
-    while (!game_over)
+    if (strlen(player_one_name) != 0)
     {
-        play(players_ptr, current_player_index, played_spots);
-        play_count++;
-        if (play_count >= 4)
+        players[0].name = player_one_name;
+    }
+
+    if (strlen(player_two_name) != 0)
+    {
+        players[1].name = player_two_name;
+    }
+
+    while (true)
+    {
+        if (game_over)
         {
-            bool is_player_win = check_player_win(&players[current_player_index]);
-            if (is_player_win == true)
+            if (in_game_menu() == 2)
             {
-                printf("%s wins!\n", players[current_player_index].name);
+                break;
+            }
+            else
+            {
+                printf("Game must countunu and resetevery thing");
+            }
+        }
+        draw_map(played_spots);
+        while (!game_over)
+        {
+
+            play(players_ptr, current_player_index, played_spots);
+            play_count++;
+            if (play_count >= 4)
+            {
+                bool is_player_win = check_player_win(&players[current_player_index]);
+                if (is_player_win == true)
+                {
+                    printf("%s wins!\n", players[current_player_index].name);
+                    players[current_player_index].score++;
+                    game_over = true;
+                }
+            }
+            current_player_index = current_player_index == 0 ? 1 : 0;
+            if (play_count == 9)
+            {
+                printf("It's a tie!\n");
+                ties++;
                 game_over = true;
             }
         }
-        current_player_index = current_player_index == 0 ? 1 : 0;
+        printf("Score: %s - %d, %s - %d, Ties - %d\n", players[0].name, players[0].score, players[1].name, players[1].score, ties);
     }
+}
 
+int main()
+{
+    char *player_one_name, *player_two_name;
+    int answer = main_menu();
+
+    while (true)
+    {
+        if (answer == 1)
+        {
+            get_player_name(&player_one_name);
+            get_player_name(&player_two_name);
+
+            printf("################################");
+            printf("player one name is %s\n", player_one_name);
+            printf("player two name is %s\n", player_two_name);
+            printf("################################");
+
+            game(player_one_name, player_two_name);
+        }
+        else if (answer == 2)
+        {
+            printf("Playing with computer is not implemented yet\n");
+        }
+        else if (answer == 3)
+        {
+            break;
+        }
+    }
     return 0;
 }
